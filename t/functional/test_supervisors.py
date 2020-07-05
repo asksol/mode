@@ -74,7 +74,6 @@ class SupervisorTest:
         assert service.supervisor is supervisor
 
 
-@pytest.mark.asyncio
 async def test_OneForOneSupervisor():
     t = SupervisorTest(OneForOneSupervisor)
     supervisor, y, z = await t.start()
@@ -91,7 +90,6 @@ async def test_OneForOneSupervisor():
     assert y.stopped_count == 1
 
 
-@pytest.mark.asyncio
 async def test_ForfeitOneForOneSupervisor():
     t = SupervisorTest(ForfeitOneForOneSupervisor)
     supervisor, y, z = await t.start()
@@ -110,7 +108,6 @@ async def test_ForfeitOneForOneSupervisor():
     assert z.stopped_count == 1
 
 
-@pytest.mark.asyncio
 async def test_ForfeitOneForAllSupervisor():
     t = SupervisorTest(ForfeitOneForAllSupervisor)
     supervisor, y, z = await t.start()
@@ -130,7 +127,6 @@ async def test_ForfeitOneForAllSupervisor():
     assert z.stopped_count == 1
 
 
-@pytest.mark.asyncio
 async def test_OneForAllSupervisor():
     t = SupervisorTest(OneForAllSupervisor)
     supervisor, y, z = await t.start()

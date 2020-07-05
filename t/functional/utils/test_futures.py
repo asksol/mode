@@ -27,7 +27,6 @@ async def call_commit(x):
     return await x.commit()
 
 
-@pytest.mark.asyncio
 async def test_stampede():
     x = X()
     assert all(r == 1 for r in await asyncio.gather(*[
@@ -48,7 +47,6 @@ async def test_stampede():
     assert 'self' in inspect.signature(X.commit).parameters
 
 
-@pytest.mark.asyncio
 async def test_done_future():
     assert await done_future() is None
     assert await done_future(10) == 10
@@ -62,7 +60,6 @@ async def async_callable():
     return 'async'
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize('input,expected', [
     (callable, 'sync'),
     (async_callable, 'async'),
@@ -71,7 +68,6 @@ async def test_maybe_async(input, expected):
     assert await maybe_async(input()) == expected
 
 
-@pytest.mark.asyncio
 async def test_maybe_cancel(*, loop):
     assert not maybe_cancel(None)
     future = loop.create_future()
@@ -81,7 +77,6 @@ async def test_maybe_cancel(*, loop):
 
 class test_StampedeWrapper:
 
-    @pytest.mark.asyncio
     async def test_concurrent(self):
         t = Mock()
 
@@ -100,7 +95,6 @@ class test_StampedeWrapper:
 
         t.assert_called_once_with()
 
-    @pytest.mark.asyncio
     async def test_sequential(self):
         t = Mock()
 
@@ -114,7 +108,6 @@ class test_StampedeWrapper:
 
         assert t.call_count == 10
 
-    @pytest.mark.asyncio
     async def test_raises_cancel(self):
 
         async def wrapped():
@@ -125,7 +118,6 @@ class test_StampedeWrapper:
         with pytest.raises(asyncio.CancelledError):
             await x()
 
-    @pytest.mark.asyncio
     async def test_already_done(self):
 
         async def wrapped():
@@ -137,7 +129,6 @@ class test_StampedeWrapper:
         assert await x() == 'foo'
 
 
-@pytest.mark.asyncio
 async def test_maybe_set_exception():
     loop = asyncio.get_event_loop()
     future = loop.create_future()
@@ -150,7 +141,6 @@ async def test_maybe_set_exception():
         future.result()
 
 
-@pytest.mark.asyncio
 async def test_maybe_set_result():
     loop = asyncio.get_event_loop()
     future = loop.create_future()

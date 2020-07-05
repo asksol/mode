@@ -45,13 +45,11 @@ class test_Proxy:
         proxy.add_dependency(subservice)
         service.add_dependency.assert_called_once_with(subservice)
 
-    @pytest.mark.asyncio
-    async def test_add_runtime_dependency(self, *, proxy, service, subservice):
+    async def test_add_runtime_dependency(self, *, proxy, service, subservice, loop):
         ret = await proxy.add_runtime_dependency(subservice)
         service.add_runtime_dependency.assert_called_once_with(subservice)
         assert ret is service.add_runtime_dependency.coro()
 
-    @pytest.mark.asyncio
     async def test_add_async_context(self, *, proxy, service):
         context = MagicMock()
         ret = await proxy.add_async_context(context)
@@ -64,18 +62,15 @@ class test_Proxy:
         service.add_context.assert_called_once_with(context)
         assert ret is service.add_context()
 
-    @pytest.mark.asyncio
     async def test_start(self, *, proxy, service):
         await proxy.start()
         service.start.assert_called_once_with()
 
-    @pytest.mark.asyncio
     async def test_maybe_start(self, *, proxy, service):
         service.maybe_start.coro.return_value = False
         assert not await proxy.maybe_start()
         service.maybe_start.assert_called_once_with()
 
-    @pytest.mark.asyncio
     async def test_crash(self, *, proxy, service):
         exc = KeyError()
         await proxy.crash(exc)
@@ -86,7 +81,6 @@ class test_Proxy:
         proxy._crash(exc)
         service._crash.assert_called_once_with(exc)
 
-    @pytest.mark.asyncio
     async def test_stop(self, *, proxy, service):
         await proxy.stop()
         service.stop.assert_called_once_with()
@@ -95,12 +89,10 @@ class test_Proxy:
         proxy.service_reset()
         service.service_reset.assert_called_once_with()
 
-    @pytest.mark.asyncio
     async def test_restart(self, *, proxy, service):
         await proxy.restart()
         service.restart.assert_called_once_with()
 
-    @pytest.mark.asyncio
     async def test_wait_until_stopped(self, *, proxy, service):
         await proxy.wait_until_stopped()
         service.wait_until_stopped.assert_called_once_with()

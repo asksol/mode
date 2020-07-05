@@ -9,7 +9,6 @@ from mode.utils.contexts import asynccontextmanager
 from mode.utils.mocks import ANY, AsyncMock, Mock, patch
 
 
-@pytest.mark.asyncio
 async def test_Timer_real_run():
     i = 0
     async for sleep_time in Timer(0.1, sleep=asyncio.sleep):
@@ -68,7 +67,6 @@ class test_Timer:
     def first_interval(self):
         return self.new_interval()
 
-    @pytest.mark.asyncio
     async def test_too_early(self, *, clock, timer, first_interval):
         interval = self.interval
         skew = self.skew
@@ -89,7 +87,6 @@ class test_Timer:
             assert timer.drifting_early == 1
             assert not timer.drifting_late
 
-    @pytest.mark.asyncio
     async def test_too_late(self, *, clock, timer, first_interval):
         interval = self.interval
         skew = self.skew

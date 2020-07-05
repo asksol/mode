@@ -64,7 +64,6 @@ async def baz(stack, prev_req):
         assert stack.top is current
 
 
-@pytest.mark.asyncio
 async def test_coroutines():
     stack = LocalStack()
     await assert_stack(stack)
@@ -93,7 +92,6 @@ def test_stack_pop__when_empty_list():
     assert stack._stack.get(None) is None
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize('retry', range(3))
 async def test_threads(retry):
     stack = LocalStack()

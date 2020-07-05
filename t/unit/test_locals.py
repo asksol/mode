@@ -221,7 +221,6 @@ class test_Proxy:
         assert x.entered
         assert x.exited
 
-    @pytest.mark.asyncio
     async def test_async_context(self):
 
         class X(object):
@@ -595,12 +594,10 @@ class test_AwaitableProxy:
     def s(self):
         return AwaitableProxy(lambda: self.asynfun(), cache=True)
 
-    @pytest.mark.asyncio
     async def test_type(self, *, s):
         assert isinstance(s, Awaitable)
         assert await s  # fixes 'was never awaited' warning.
 
-    @pytest.mark.asyncio
     async def test_awaitable(self, *, s):
         assert await s == 10
 
@@ -625,7 +622,6 @@ class test_AsyncIterableProxy:
     def test_aiter(self, *, s):
         assert isinstance(s.__aiter__(), AsyncIterator)
 
-    @pytest.mark.asyncio
     async def test_async_for(self, *, s):
         assert [i async for i in s] == list(range(10))
 
@@ -641,7 +637,6 @@ class test_AsyncIteratorProxy(test_AsyncIterableProxy):
         super().test_type(s=s)
         assert isinstance(s, AsyncIterator)
 
-    @pytest.mark.asyncio
     async def test_anext(self, *, s):
         for i in range(10):
             assert await s.__anext__() == i
@@ -678,7 +673,6 @@ class test_AsyncGeneratorProxy(test_AsyncIteratorProxy):
     def coro(self, *, _coro):
         return AsyncGeneratorProxy(lambda: _coro)
 
-    @pytest.mark.asyncio
     async def test_coro(self, *, coro):
         await coro.__anext__()  # kickstart
         assert await coro.asend(2) == 4

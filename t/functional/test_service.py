@@ -90,13 +90,11 @@ class Complex(mode.Service):
         self.y = self.add_dependency(Y())
 
 
-@pytest.mark.asyncio
 async def test_start_stop_simple():
     async with X():
         ...
 
 
-@pytest.mark.asyncio
 async def test_start_stop_restart_complex():
     async with Complex() as service:
         assert service.y.sync_context.acquires == 1
@@ -126,7 +124,6 @@ async def test_start_stop_restart_complex():
         assert service.y.z.x._started.is_set()
 
 
-@pytest.mark.asyncio
 async def test_remove_dependency():
     async with Complex() as service:
         x = service.x
@@ -144,7 +141,6 @@ async def crash(service, exc):
         return thrown_exc
 
 
-@pytest.mark.asyncio
 async def test_crash_leaf():
     async with Complex() as service:
         error = None
@@ -158,7 +154,6 @@ async def test_crash_leaf():
         assert service.crash_reason is error
 
 
-@pytest.mark.asyncio
 async def test_crash_middle():
     async with Complex() as service:
         error = await crash(service.y, KeyError('foo'))
@@ -169,7 +164,6 @@ async def test_crash_middle():
         assert service.crash_reason is error
 
 
-@pytest.mark.asyncio
 async def test_crash_head():
     async with Complex() as service:
         error = await crash(service, KeyError('foo'))
@@ -180,13 +174,11 @@ async def test_crash_head():
         assert service.crash_reason is error
 
 
-@pytest.mark.asyncio
 async def test_wait():
     async with X() as service:
         await service.wait(asyncio.sleep(0.1))
 
 
-@pytest.mark.asyncio
 async def test_wait__future_cancelled():
     async with X() as service:
 
@@ -206,7 +198,6 @@ async def test_wait__future_cancelled():
         fut2.cancel()
 
 
-@pytest.mark.asyncio
 async def test_wait__when_stopped():
     async with X() as service:
 
@@ -225,7 +216,6 @@ async def test_wait__when_stopped():
         fut2.cancel()
 
 
-@pytest.mark.asyncio
 async def test_wait__when_crashed():
     async with X() as service:
 
@@ -247,7 +237,6 @@ async def test_wait__when_crashed():
         fut2.cancel()
 
 
-@pytest.mark.asyncio
 async def test_wait__multiple_events():
     async with X() as service:
         event1 = Event()
@@ -283,7 +272,6 @@ class MundaneLogsDebug(mode.Service):
     mundane_level = 'debug'
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize('service_cls,expected_level', [
     (MundaneLogsDefault, logging.INFO),
     (MundaneLogsDebug, logging.DEBUG),

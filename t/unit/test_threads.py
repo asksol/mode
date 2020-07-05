@@ -22,12 +22,12 @@ class test_WorkerThread:
     def thread(self, *, service):
         return WorkerThread(service)
 
-    def test_run(self, *, thread, service):
+    def test_run(self, *, thread, service, loop):
         thread.run()
         service._start_thread.assert_called_once_with()
         assert service.is_stopped.is_set()
 
-    def test_stop__alive(self, *, thread):
+    def test_stop__alive(self, *, thread, loop):
         thread.is_stopped = Mock()
         thread.is_alive = Mock(return_value=True)
         thread.join = Mock()
@@ -36,7 +36,7 @@ class test_WorkerThread:
         thread.is_stopped.wait.assert_called_once_with()
         thread.join.assert_called_with(threading.TIMEOUT_MAX)
 
-    def test_stop__not_alive(self, *, thread):
+    def test_stop__not_alive(self, *, thread, loop):
         thread.is_stopped = Mock()
         thread.is_alive = Mock(return_value=False)
         thread.join = Mock()
@@ -47,10 +47,6 @@ class test_WorkerThread:
 
 
 class test_ServiceThread:
-
-    @pytest.fixture
-    def loop(self, *, event_loop):
-        return event_loop
 
     @pytest.fixture
     def thread_loop(self):
@@ -67,26 +63,24 @@ class test_ServiceThread:
             loop=loop,
             thread_loop=thread_loop)
 
-    @pytest.mark.asyncio
     async def test_on_thread_stop(self, *, thread):
         await thread.on_thread_stop()
 
-    def test_constructor_executor_deprecated(self):
+    def test_constructor_executor_deprecated(self, loop):
         with pytest.raises(NotImplementedError):
             ServiceThread(executor=Mock())
 
-    def test_constructor_worker_argument(self):
+    def test_constructor_worker_argument(self, loop):
         Worker = Mock()
         assert ServiceThread(Worker=Worker).Worker is Worker
         assert ServiceThread(Worker=None).Worker
 
-    def test_new_shutdown_event(self, *, thread):
+    def test_new_shutdown_event(self, *, thread, loop):
         event = thread._new_shutdown_event()
         assert isinstance(event, Event)
         assert not event.is_set()
 
-    @pytest.mark.asyncio
-    async def test_maybe_start(self, *, thread):
+    async def test_maybe_start(self, *, thread, loop):
         thread.start = AsyncMock(name='start')
         thread._thread_started.set()
         await thread.maybe_start()
@@ -96,11 +90,10 @@ class test_ServiceThread:
         await thread.maybe_start()
         thread.start.assert_called_once_with()
 
-    @pytest.mark.asyncio
-    async def test_start(self, *, event_loop, thread):
+    async def test_start(self, *, loop, thread):
         thread.add_future = AsyncMock(name='thread.add_future')
         thread._thread_running = None
-        assert thread.parent_loop == event_loop
+        assert thread.parent_loop == loop
         asyncio.ensure_future(self._wait_for_event(thread))
         await thread.start()
 
@@ -109,12 +102,11 @@ class test_ServiceThread:
 
         assert thread._thread_started.is_set()
 
-    @pytest.mark.asyncio
-    async def test_start__no_wait(self, *, event_loop, thread):
+    async def test_start__no_wait(self, *, loop, thread):
         thread.add_future = AsyncMock(name='thread.add_future')
         thread.wait_for_thread = False
         thread._thread_running = None
-        assert thread.parent_loop == event_loop
+        assert thread.parent_loop == loop
         asyncio.ensure_future(self._wait_for_event(thread))
         await thread.start()
 
@@ -129,13 +121,12 @@ class test_ServiceThread:
         if not thread._thread_running.done():
             thread._thread_running.set_result(None)
 
-    @pytest.mark.asyncio
-    async def test_start__already_started_raises(self, *, thread):
+    async def test_start__already_started_raises(self, *, thread, loop):
         thread._thread_started.set()
         with pytest.raises(AssertionError):
             await thread.start()
 
-    def test_start_thread(self, *, thread):
+    def test_start_thread(self, *, thread, loop):
         thread._serve = Mock(name='thread._serve')
         with patch('asyncio.set_event_loop') as set_event_loop:
             thread._start_thread()
@@ -144,7 +135,7 @@ class test_ServiceThread:
             thread.loop.run_until_complete.assert_called_once_with(
                 thread._serve())
 
-    def test_start_thread__raises(self, *, thread):
+    def test_start_thread__raises(self, *, thread, loop):
         thread._serve = Mock(name='thread._serve')
         thread._serve.side_effect = KeyError('foo')
         assert not thread._shutdown.is_set()
@@ -155,24 +146,20 @@ class test_ServiceThread:
                 thread._serve.assert_called_once_with()
                 assert thread._shutdown.is_set()
 
-    @pytest.mark.asyncio
-    async def test_stop(self, *, thread):
+    async def test_stop(self, *, thread, loop):
         thread._started.clear()
         await thread.stop()
         thread._started.set()
         thread._shutdown.set()
         await thread.stop()
 
-    @pytest.mark.asyncio
-    async def test_stop_children(self, *, thread):
+    async def test_stop_children(self, *, thread, loop):
         await thread._stop_children()
 
-    @pytest.mark.asyncio
-    async def test_stop_futures(self, *, thread):
+    async def test_stop_futures(self, *, thread, loop):
         await thread._stop_futures()
 
-    @pytest.mark.asyncio
-    async def test_shutdown_thread(self, *, thread):
+    async def test_shutdown_thread(self, *, thread, loop):
         thread._default_stop_children = AsyncMock(name='stop_children')
         thread.on_thread_stop = AsyncMock(name='on_thread_stop')
         thread._default_stop_futures = AsyncMock(name='stop_futures')
@@ -187,8 +174,7 @@ class test_ServiceThread:
         await thread._shutdown_thread()
         thread._thread.stop.assert_not_called()
 
-    @pytest.mark.asyncio
-    async def test__thread_keepalive(self, *, thread):
+    async def test__thread_keepalive(self, *, thread, loop):
 
         async def timer(interval, **kwargs):
             for _ in range(10):
@@ -198,8 +184,7 @@ class test_ServiceThread:
 
         await thread._thread_keepalive(thread)
 
-    @pytest.mark.asyncio
-    async def test_serve(self, *, thread):
+    async def test_serve(self, *, thread, loop):
         self.mock_for_serve(thread)
         await thread._serve()
 
@@ -207,8 +192,7 @@ class test_ServiceThread:
         thread.wait_until_stopped.assert_called_once_with()
         thread._shutdown_thread.assert_called_once_with()
 
-    @pytest.mark.asyncio
-    async def test_serve__CancelledError(self, *, thread):
+    async def test_serve__CancelledError(self, *, thread, loop):
         self.mock_for_serve(thread)
         thread._default_start.side_effect = asyncio.CancelledError()
 
@@ -217,8 +201,7 @@ class test_ServiceThread:
         thread.crash.assert_not_called()
         thread._shutdown_thread.assert_called_once_with()
 
-    @pytest.mark.asyncio
-    async def test_serve__Exception(self, *, thread):
+    async def test_serve__Exception(self, *, thread, loop):
         self.mock_for_serve(thread)
         exc = thread._default_start.side_effect = KeyError()
 
@@ -228,8 +211,7 @@ class test_ServiceThread:
         thread.crash.assert_called_once_with(exc)
         thread._shutdown_thread.assert_called_once_with()
 
-    @pytest.mark.asyncio
-    async def test_serve__Exception_no_beacon(self, *, thread):
+    async def test_serve__Exception_no_beacon(self, *, thread, loop):
         self.mock_for_serve(thread)
         thread.beacon.root = None
         exc = thread._default_start.side_effect = KeyError()
@@ -249,13 +231,12 @@ class test_ServiceThread:
         thread.beacon.root.data.crash = AsyncMock(name='root.crash')
         thread._shutdown_thread = AsyncMock(name='shutdown_thread')
 
-    def test_on_crash(self, *, thread):
+    def test_on_crash(self, *, thread, loop):
         with patch('traceback.print_exc') as print_exc:
             thread.on_crash('foo {0!r}', 10)
             print_exc.assert_called_once_with(None, ANY)
 
-    @pytest.mark.asyncio
-    async def test_crash(self, *, thread):
+    async def test_crash(self, *, thread, loop):
         exc = KeyError()
         thread._thread_running = None
         await thread.crash(exc)
@@ -268,9 +249,7 @@ class test_ServiceThread:
 
 class test_MethodQueue:
 
-    @pytest.mark.asyncio
-    async def test_call(self):
-        loop = asyncio.get_event_loop()
+    async def test_call(self, loop):
         queue = MethodQueue(num_workers=2, loop=loop)
 
         async with queue:
@@ -287,9 +266,7 @@ class test_MethodQueue:
                 i * i for i, _ in enumerate(futures)
             ]
 
-    @pytest.mark.asyncio
-    async def test_call_raising(self):
-        loop = asyncio.get_event_loop()
+    async def test_call_raising(self, loop):
         queue = MethodQueue(num_workers=2, loop=loop)
         all_done = asyncio.Event(loop=loop)
         calls = 0
@@ -319,9 +296,7 @@ class test_MethodQueue:
                     with pytest.raises(KeyError):
                         future.result()
 
-    @pytest.mark.asyncio
-    async def test_cast(self):
-        loop = asyncio.get_event_loop()
+    async def test_cast(self, loop):
         queue = MethodQueue(num_workers=2, loop=loop)
 
         calls = 0
@@ -339,9 +314,7 @@ class test_MethodQueue:
                 await queue.cast(myfun, i, i)
             await all_done.wait()
 
-    @pytest.mark.asyncio
-    async def test_flush(self):
-        loop = asyncio.get_event_loop()
+    async def test_flush(self, loop):
         queue = MethodQueue(num_workers=2, loop=loop)
 
         calls = 0
@@ -368,22 +341,19 @@ class test_QueueServiceThread:
     def test_method_queue(self, *, s):
         assert s.method_queue is s.method_queue
 
-    @pytest.mark.asyncio
-    async def test_on_thread_started(self, *, s):
+    async def test_on_thread_started(self, *, s, loop):
         s._method_queue = Mock(start=AsyncMock())
         await s.on_thread_started()
         s._method_queue.start.coro.assert_called_once_with()
 
-    @pytest.mark.asyncio
-    async def test_on_thread_stop(self, *, s):
+    async def test_on_thread_stop(self, *, s, loop):
         s._method_queue = None
         await s.on_thread_stop()
         s._method_queue = Mock(stop=AsyncMock())
         await s.on_thread_stop()
         s._method_queue.stop.coro.assert_called_once_with()
 
-    @pytest.mark.asyncio
-    async def test_call_thread(self, *, s):
+    async def test_call_thread(self, *, s, loop):
         s._method_queue = Mock(call=AsyncMock())
 
         async def on_call(*args, **kwargs):
@@ -401,8 +371,7 @@ class test_QueueServiceThread:
             kw1=1, kw2=2,
         )
 
-    @pytest.mark.asyncio
-    async def test_cast_thread(self, *, s):
+    async def test_cast_thread(self, *, s, loop):
         fun = Mock()
         s._method_queue = Mock(cast=AsyncMock())
         await s.cast_thread(fun, 'arg1', 'arg2', kw1=1, kw2=2)

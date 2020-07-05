@@ -18,7 +18,6 @@ class AIT(AsyncIterable):
             yield i
 
 
-@pytest.mark.asyncio
 async def test_aenumerate():
     it = (a async for a in aenumerate(aiter([1, 2, 3, 4, 5])))
     assert await anext(it) == (0, 1)
@@ -33,7 +32,6 @@ async def test_aenumerate():
     assert repr(aiter([1, 2, 3, 4]))
 
 
-@pytest.mark.asyncio
 async def test_arange():
     assert [x async for x in arange(10)] == list(range(10))
     assert [x async for x in arange(2, 10)] == list(range(2, 10))
@@ -46,13 +44,11 @@ async def test_arange():
     assert arange(10).index(3) == 3
 
 
-@pytest.mark.asyncio
 async def test_aslice():
     assert await alist(aslice(arange(100), 10)) == list(range(10))
     assert await alist(aslice(arange(100), 10, 20)) == list(range(10, 20))
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize('range_n,n,expected', [
     (11, 2, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10]]),
     (11, 3, [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10]]),
@@ -72,7 +68,6 @@ def test_aiter__not_an_iterator():
         aiter(object())
 
 
-@pytest.mark.asyncio
 async def test_aiter__AsyncIterable():
     it = aiter(AIT())
     assert await anext(it) == 0

@@ -425,8 +425,7 @@ class test_flight_recorder:
                 {'foo': 'bar'},
             )
 
-    @pytest.mark.asyncio
-    async def test__waiting__cancelled(self, bb):
+    async def test__waiting__cancelled(self, bb, loop):
         assert not bb._logs
         bb._buffer_log(
             logging.ERROR, 'msg %r %(foo)s', (1,), {'foo': 'bar'})
@@ -436,8 +435,7 @@ class test_flight_recorder:
             sleep.assert_called_once_with(bb.timeout)
             assert bb._logs
 
-    @pytest.mark.asyncio
-    async def test__waiting__has_logs(self, bb):
+    async def test__waiting__has_logs(self, bb, loop):
         assert not bb._logs
         bb._buffer_log(
             logging.ERROR, 'msg %r %(foo)s', (1,), {'foo': 'bar'})
@@ -445,14 +443,12 @@ class test_flight_recorder:
         with patch('asyncio.sleep', AsyncMock()):
             await bb._waiting()
 
-    @pytest.mark.asyncio
-    async def test__waiting__no_logs(self, bb):
+    async def test__waiting__no_logs(self, bb, loop):
         assert not bb._logs
         with patch('asyncio.sleep', AsyncMock()):
             await bb._waiting()
 
-    @pytest.mark.asyncio
-    async def test__waiting__enabled_by(self, bb):
+    async def test__waiting__enabled_by(self, bb, loop):
         assert not bb._logs
         bb.enabled_by = Mock()
         with patch('asyncio.sleep', AsyncMock()):
@@ -460,8 +456,7 @@ class test_flight_recorder:
                 await bb._waiting()
             fts.assert_called_once_with(bb.enabled_by)
 
-    @pytest.mark.asyncio
-    async def test__waiting__raises(self, bb):
+    async def test__waiting__raises(self, bb, loop):
         assert not bb._logs
         bb.logger.warning = Mock(side_effect=KeyError())
         with patch('asyncio.sleep', AsyncMock()):
@@ -567,12 +562,11 @@ def test_redirect_stdouts():
         assert isinstance(sys.stderr, FileLogProxy)
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize('extra_context', [
     {},
     {'foo': 'bar'},
 ])
-async def test_on_timeout(extra_context):
+async def test_on_timeout(extra_context, loop):
     logger = Mock()
     assert isinstance(on_timeout, _FlightRecorderProxy)
 

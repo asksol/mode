@@ -42,7 +42,6 @@ def test_disconnect_value_error():
     X.on_started.disconnect(Mock())
 
 
-@pytest.mark.asyncio
 async def test_signals():
     x, y = X(), Y()
 

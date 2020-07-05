@@ -1135,7 +1135,6 @@
         def app():
             return App()
 
-        @pytest.mark.asyncio
         async def test_something(*, app):
             app.some_async_method = AsyncMock()
             async with app: # starts and stops the service, calling on_start

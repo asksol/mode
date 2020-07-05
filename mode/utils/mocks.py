@@ -174,7 +174,6 @@ class AsyncContextMock(unittest.mock.Mock):  # type: ignore
             monkeypatch.setattr('where.is.ClientSession', session)
             return session
 
-        @pytest.mark.asyncio
         async def test_session(session):
             from where.is import ClientSession
             session = ClientSession()

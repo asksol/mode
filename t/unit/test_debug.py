@@ -12,7 +12,6 @@ class test_BlockingDetector:
     def block(self):
         return BlockingDetector(timeout=10.0)
 
-    @pytest.mark.asyncio
     async def test__deadman_switch(self, block):
         block._reset_signal = Mock()
         block.sleep = AsyncMock()

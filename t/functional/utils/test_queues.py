@@ -26,7 +26,6 @@ class test_FlowControlEvent:
 
 class test_FlowControlQueue:
 
-    @pytest.mark.asyncio
     async def test_suspend_resume(self):
         flow_control = FlowControlEvent()
         queue = FlowControlQueue(flow_control=flow_control)
@@ -40,7 +39,6 @@ class test_FlowControlQueue:
         assert await queue.get() == 1
         assert await queue.get() == 2
 
-    @pytest.mark.asyncio
     async def test_suspend_resume__clear_on_resume(self):
         flow_control = FlowControlEvent()
         queue = FlowControlQueue(
@@ -57,7 +55,6 @@ class test_FlowControlQueue:
         assert monotonic() - time_now > 0.1
         await queue.get() == 2
 
-    @pytest.mark.asyncio
     async def test_suspend_resume__initially_suspended(self):
         flow_control = FlowControlEvent(initially_suspended=True)
         queue = FlowControlQueue(flow_control=flow_control)
@@ -67,7 +64,6 @@ class test_FlowControlQueue:
         assert await queue.get() == 1
         assert monotonic() - time_now > 0.1
 
-    @pytest.mark.asyncio
     async def test_suspend_resume__initially_resumed(self):
         flow_control = FlowControlEvent(initially_suspended=False)
         queue = FlowControlQueue(flow_control=flow_control)
@@ -81,7 +77,6 @@ class test_FlowControlQueue:
 
 class test_ThrowableQueue:
 
-    @pytest.mark.asyncio
     async def test_get__throw_first_in_buffer(self):
         flow_control = FlowControlEvent(initially_suspended=False)
         queue = ThrowableQueue(flow_control=flow_control)
@@ -102,7 +97,6 @@ class test_ThrowableQueue:
             await queue.get()
         queue.clear()
 
-    @pytest.mark.asyncio
     async def test_get_nowait_throw_first_in_buffer(self):
         flow_control = FlowControlEvent(initially_suspended=False)
         queue = ThrowableQueue(flow_control=flow_control)
@@ -123,7 +117,6 @@ class test_ThrowableQueue:
             queue.get_nowait()
         queue.clear()
 
-    @pytest.mark.asyncio
     async def test_clear__cancels_waiting_putter(self):
         flow_control = FlowControlEvent(initially_suspended=False)
         queue = ThrowableQueue(flow_control=flow_control, maxsize=1)
@@ -137,7 +130,6 @@ class test_ThrowableQueue:
         with pytest.raises(asyncio.CancelledError):
             await queue.put(1)
 
-    @pytest.mark.asyncio
     async def test_throw__notify_pending_waiters(self):
         flow_control = FlowControlEvent(initially_suspended=False)
         queue = ThrowableQueue(flow_control=flow_control, maxsize=1)
@@ -159,7 +151,6 @@ class test_ThrowableQueue:
 
         assert raised == 1
 
-    @pytest.mark.asyncio
     async def test_get_nowait_empty(self):
         flow_control = FlowControlEvent(initially_suspended=False)
         queue = ThrowableQueue(flow_control=flow_control)

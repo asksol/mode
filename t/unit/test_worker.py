@@ -83,7 +83,6 @@ class test_Worker:
         worker._add_monitor = AsyncMock()
         worker.install_signal_handlers = Mock()
 
-    @pytest.mark.asyncio
     async def test_on_first_start(self, worker):
         self._setup_for_on_first_start(worker)
         worker.debug = False
@@ -98,7 +97,6 @@ class test_Worker:
         await worker.on_first_start()
         worker._add_monitor.coro.assert_called_once_with()
 
-    @pytest.mark.asyncio
     async def test_on_first_start__override_logging(self):
         worker = Worker(override_logging=False)
         self._setup_for_on_first_start(worker)
@@ -106,7 +104,6 @@ class test_Worker:
 
         worker._setup_logging.assert_not_called()
 
-    @pytest.mark.asyncio
     async def test_on_execute(self, worker):
         await worker.on_execute()
 
@@ -165,7 +162,6 @@ class test_Worker:
         worker.loop.run_until_complete.assert_called_with(
             worker._signal_stop_future)
 
-    @pytest.mark.asyncio
     async def test_maybe_start_blockdetection(self, worker):
         worker._blocking_detector = Mock(maybe_start=AsyncMock())
         worker.debug = False
@@ -223,13 +219,12 @@ class test_Worker:
         worker._on_sigusr1()
         worker.add_future.assert_called_once_with(worker._cry.return_value)
 
-    @pytest.mark.asyncio
     async def test__cry(self, worker):
         with patch('mode.utils.logging.cry') as cry:
             await worker._cry()
             cry.assert_called_once_with(file=worker.stderr)
 
-    def test__schedule_shutdown(self, worker):
+    def test__schedule_shutdown(self, worker, loop):
         with patch('asyncio.ensure_future') as ensure_future:
             worker._stop_on_signal = Mock()
             worker._schedule_shutdown(Signals.SIGTERM)
@@ -242,7 +237,6 @@ class test_Worker:
 
             worker._schedule_shutdown(Signals.SIGTERM)
 
-    @pytest.mark.asyncio
     async def test__stop_on_signal(self, worker):
         worker.stop = AsyncMock()
         await worker._stop_on_signal(Signals.SIGTERM)
@@ -352,8 +346,7 @@ class test_Worker:
             with patch('asyncio.sleep'):
                 yield ensure_future
 
-    @pytest.mark.asyncio
-    async def test__sentinel_task(self, worker):
+    async def test__sentinel_task(self, worker, loop):
         with patch('asyncio.sleep', AsyncMock()) as sleep:
             await worker._sentinel_task()
             sleep.coro.assert_called_once_with(1.0, loop=worker.loop)
@@ -386,8 +379,7 @@ class test_Worker:
                 for task in all_tasks.return_value:
                     task.cancel.assert_called_once_with()
 
-    @pytest.mark.asyncio
-    async def test_on_started(self, worker):
+    async def test_on_started(self, worker, loop):
         worker.daemon = False
         worker.wait_until_stopped = AsyncMock()
         await worker.on_started()
@@ -396,8 +388,7 @@ class test_Worker:
         await worker.on_started()
         worker.wait_until_stopped.coro.assert_called_once()
 
-    @pytest.mark.asyncio
-    async def test__add_monitor(self, worker):
+    async def test__add_monitor(self, worker, loop):
         worker.add_context = Mock()
         with patch_module('aiomonitor'):
             import aiomonitor
@@ -411,8 +402,7 @@ class test_Worker:
                 loop=worker.loop,
             )
 
-    @pytest.mark.asyncio
-    async def test__add_monitor__no_aiomonitor(self, worker):
+    async def test__add_monitor__no_aiomonitor(self, worker, loop):
         worker.log.warning = Mock()
         with mask_module('aiomonitor'):
             await worker._add_monitor()
@@ -421,7 +411,7 @@ class test_Worker:
     def test_repr_info(self, worker):
         assert repr(worker)
 
-    def test_blocking_detector(self, worker):
+    def test_blocking_detector(self, worker, loop):
         b = worker.blocking_detector
         assert isinstance(b, BlockingDetector)
         assert b.timeout == worker.blocking_timeout

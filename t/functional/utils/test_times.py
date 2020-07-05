@@ -51,7 +51,6 @@ def test_Bucket():
     assert bucket.tokens
 
 
-@pytest.mark.asyncio
 async def test_rate_limit():
     time_start = TIME_MONOTONIC()
     x = 0
@@ -63,7 +62,6 @@ async def test_rate_limit():
     assert spent > 0.9
 
 
-@pytest.mark.asyncio
 async def test_pour():
     bucket = rate_limit(10, 1.0, raises=None)
     for _x in range(10):
@@ -76,7 +74,6 @@ async def test_pour():
     assert bucket.pour()
 
 
-@pytest.mark.asyncio
 async def test_rate_limit_raising():
     bucket = rate_limit(10, 1.0, raises=KeyError)
 
